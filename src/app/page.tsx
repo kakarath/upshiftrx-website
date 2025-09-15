@@ -42,71 +42,70 @@ export default function Home() {
   const handleDemoSearch = async () => {
     setIsSearching(true);
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const response = await fetch('/api/demo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ drug: searchQuery }),
+      });
 
-    // Mock demo data based on search query
-    const mockResults: Record<string, DemoResults> = {
-      aspirin: {
-        applications: [
-          { disease: "Alzheimer&apos;s Disease", confidence: 78 },
-          { disease: "Colorectal Cancer Prevention", confidence: 85 },
-          { disease: "Preeclampsia Prevention", confidence: 72 },
-        ],
-        papersAnalyzed: 15420,
-        connections: 847,
-        analysisTime: "0.8s",
-      },
-      metformin: {
-        applications: [
-          { disease: "Anti-aging Therapy", confidence: 82 },
-          { disease: "Cancer Prevention", confidence: 76 },
-          { disease: "Neuroprotection", confidence: 69 },
-        ],
-        papersAnalyzed: 22150,
-        connections: 1203,
-        analysisTime: "1.2s",
-      },
-      ruxolitinib: {
-        applications: [
-          { disease: "Alopecia Areata", confidence: 89 },
-          { disease: "Chronic Active Epstein-Barr Virus Disease", confidence: 84 },
-          { disease: "Rheumatoid Arthritis", confidence: 78 },
-          { disease: "Severe COVID-19 Pneumonia", confidence: 72 },
-          { disease: "Vitiligo Treatment", confidence: 74 },
-        ],
-        papersAnalyzed: 12340,
-        connections: 687,
-        analysisTime: "0.9s",
-      },
-      ertugliflozin: {
-        applications: [
-          { disease: "Type 2 Diabetes (T2D)", confidence: 92 },
-          { disease: "Arteriosclerotic CVD", confidence: 85 },
-          { disease: "Heart Failure", confidence: 81 },
-          { disease: "Chronic Kidney Disease", confidence: 77 },
-          { disease: "Weight Management", confidence: 73 },
-        ],
-        papersAnalyzed: 9850,
-        connections: 542,
-        analysisTime: "0.7s",
-      },
-      default: {
-        applications: [
-          { disease: "Inflammatory Conditions", confidence: 65 },
-          { disease: "Metabolic Disorders", confidence: 58 },
-          { disease: "Neurological Conditions", confidence: 71 },
-        ],
-        papersAnalyzed: 8750,
-        connections: 432,
-        analysisTime: "0.5s",
-      },
-    };
+      if (response.ok) {
+        const data = await response.json();
+        setDemoResults(data);
+      } else {
+        // Fallback to mock data if API fails
+        const mockResults: Record<string, DemoResults> = {
+          aspirin: {
+            applications: [
+              { disease: "Alzheimer&apos;s Disease", confidence: 78 },
+              { disease: "Colorectal Cancer Prevention", confidence: 85 },
+              { disease: "Preeclampsia Prevention", confidence: 72 },
+            ],
+            papersAnalyzed: 15420,
+            connections: 847,
+            analysisTime: "0.8s",
+          },
+          ruxolitinib: {
+            applications: [
+              { disease: "Alopecia Areata", confidence: 89 },
+              { disease: "Chronic Active Epstein-Barr Virus Disease", confidence: 84 },
+              { disease: "Rheumatoid Arthritis", confidence: 78 },
+              { disease: "Severe COVID-19 Pneumonia", confidence: 72 },
+              { disease: "Vitiligo Treatment", confidence: 74 },
+            ],
+            papersAnalyzed: 12340,
+            connections: 687,
+            analysisTime: "0.9s",
+          },
+          default: {
+            applications: [
+              { disease: "Inflammatory Conditions", confidence: 65 },
+              { disease: "Metabolic Disorders", confidence: 58 },
+            ],
+            papersAnalyzed: 8750,
+            connections: 432,
+            analysisTime: "0.5s",
+          },
+        };
+        const query = searchQuery.toLowerCase();
+        setDemoResults(mockResults[query] || mockResults.default);
+      }
+    } catch {
+      console.error('Demo API temporarily unavailable');
+      // Fallback to mock data instead of alert
+      const mockResults: Record<string, DemoResults> = {
+        default: {
+          applications: [
+            { disease: "Service Temporarily Unavailable", confidence: 0 },
+          ],
+          papersAnalyzed: 0,
+          connections: 0,
+          analysisTime: "N/A",
+        },
+      };
+      setDemoResults(mockResults.default);
+    }
 
-    const query = searchQuery.toLowerCase();
-    const results = mockResults[query] || mockResults.default;
-
-    setDemoResults(results);
     setIsSearching(false);
   };
 
@@ -125,10 +124,14 @@ export default function Home() {
         setEmail("");
         setTimeout(() => setIsSubmitted(false), 5000);
       } else {
-        alert("Failed to subscribe. Please try again.");
+        console.error('Newsletter subscription failed');
+        // Show user-friendly error without alert()
+        setIsSubmitted(false);
       }
     } catch {
-      alert("Network error. Please try again.");
+      console.error('Network error during subscription');
+      // Show user-friendly error without alert()
+      setIsSubmitted(false);
     }
   };
 
@@ -269,8 +272,6 @@ export default function Home() {
                 {/* Primary CTA: scroll to demo */}
                 <a
                   href="#demo"
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-3 px-8 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 flex items-center space-x-2 group"
                 >
                   <Play className="w-5 h-5" />

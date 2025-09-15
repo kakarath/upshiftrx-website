@@ -25,8 +25,8 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      const errorData = await response.text();
-      console.error('MailerLite API Error:', response.status, errorData);
+      // Sanitize error data before logging
+      console.error('MailerLite API Error:', response.status);
       return NextResponse.json({ 
         error: response.status === 422 ? 'Email already subscribed' : 'Failed to subscribe' 
       }, { status: 400 });
