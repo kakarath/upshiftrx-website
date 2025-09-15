@@ -37,7 +37,8 @@ export const DEMO_DRUGS: DemoDrug[] = [
     applications: [
       { disease: "Myelofibrosis", confidence: 89, description: "FDA-approved for blood cancers" },
       { disease: "Alopecia Areata", confidence: 82, description: "Promotes hair regrowth" },
-      { disease: "Vitiligo", confidence: 76, description: "Restores skin pigmentation" }
+      { disease: "Vitiligo", confidence: 76, description: "Restores skin pigmentation" },
+      { disease: "Epstein-Barr Virus", confidence: 74, description: "Reduces viral reactivation in immunocompromised patients" }
     ]
   },
   {
@@ -47,7 +48,8 @@ export const DEMO_DRUGS: DemoDrug[] = [
     applications: [
       { disease: "Type 2 Diabetes", confidence: 91, description: "Glucose-lowering medication" },
       { disease: "Heart Failure", confidence: 79, description: "Reduces cardiovascular events" },
-      { disease: "Chronic Kidney Disease", confidence: 73, description: "Slows kidney function decline" }
+      { disease: "Chronic Kidney Disease", confidence: 73, description: "Slows kidney function decline" },
+      { disease: "Arteriosclerosis Cardiovascular Disease", confidence: 77, description: "Reduces atherosclerotic cardiovascular events" }
     ]
   },
   {
@@ -128,6 +130,26 @@ export const DEMO_DRUGS: DemoDrug[] = [
       { disease: "Non-Hodgkin Lymphoma", confidence: 90, description: "Targets CD20+ B-cell malignancies" },
       { disease: "Rheumatoid Arthritis", confidence: 85, description: "Depletes pathogenic B-cells" },
       { disease: "Multiple Sclerosis", confidence: 78, description: "Reduces CNS inflammation" }
+    ]
+  },
+  {
+    name: "Baricitinib",
+    description: "JAK1/JAK2 inhibitor",
+    category: "Kinase Inhibitor",
+    applications: [
+      { disease: "Rheumatoid Arthritis", confidence: 88, description: "JAK inhibitor for moderate to severe RA" },
+      { disease: "COVID-19 Severe Pneumonia", confidence: 75, description: "Reduces inflammation in hospitalized patients" },
+      { disease: "Atopic Dermatitis", confidence: 83, description: "Treats moderate to severe eczema" }
+    ]
+  },
+  {
+    name: "Nilotinib",
+    description: "BCR-ABL tyrosine kinase inhibitor",
+    category: "Kinase Inhibitor",
+    applications: [
+      { disease: "Chronic Myeloid Leukemia", confidence: 92, description: "Second-generation TKI for CML" },
+      { disease: "Parkinson's Disease", confidence: 68, description: "May reduce alpha-synuclein aggregation" },
+      { disease: "Acute Lymphoblastic Leukemia", confidence: 81, description: "Philadelphia chromosome-positive ALL" }
     ]
   }
 ];
