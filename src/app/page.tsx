@@ -86,7 +86,7 @@ export default function Home() {
         const mockResults: Record<string, DemoResults> = {
           aspirin: {
             applications: [
-              { disease: "Alzheimer&apos;s Disease", confidence: 78 },
+              { disease: "Alzheimer's Disease", confidence: 78 },
               { disease: "Colorectal Cancer Prevention", confidence: 85 },
               { disease: "Preeclampsia Prevention", confidence: 72 },
             ],
