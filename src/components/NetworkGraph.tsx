@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import * as d3 from 'd3';
+import { trackNetworkInteraction } from '../lib/analytics';
 
 interface NetworkNode extends d3.SimulationNodeDatum {
   id: string;
@@ -24,9 +25,23 @@ interface NetworkGraphProps {
 
 export default function NetworkGraph({ drug, applications, isDark }: NetworkGraphProps) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const simulationRef = useRef<d3.Simulation<NetworkNode, NetworkLink> | null>(null);
+
+  const handleNodeDrag = useCallback(() => {
+    trackNetworkInteraction('drag');
+  }, []);
+
+  const handleZoom = useCallback(() => {
+    trackNetworkInteraction('zoom');
+  }, []);
 
   useEffect(() => {
     if (!svgRef.current || !applications.length) return;
+
+    // Stop previous simulation
+    if (simulationRef.current) {
+      simulationRef.current.stop();
+    }
 
     // Clear previous graph
     d3.select(svgRef.current).selectAll("*").remove();
@@ -55,11 +70,15 @@ export default function NetworkGraph({ drug, applications, isDark }: NetworkGrap
     
     svg.attr("width", width).attr("height", height);
 
-    // Create simulation
+    // Create simulation with performance optimizations
     const simulation = d3.forceSimulation(nodes)
       .force("link", d3.forceLink<NetworkNode, NetworkLink>(links).id(d => d.id).distance(100))
       .force("charge", d3.forceManyBody().strength(-300))
-      .force("center", d3.forceCenter(width / 2, height / 2));
+      .force("center", d3.forceCenter(width / 2, height / 2))
+      .alphaDecay(0.05) // Faster convergence
+      .velocityDecay(0.8); // More stable
+
+    simulationRef.current = simulation;
 
     // Create links
     const link = svg.append("g")
@@ -70,7 +89,7 @@ export default function NetworkGraph({ drug, applications, isDark }: NetworkGrap
       .attr("stroke-width", (d: NetworkLink) => Math.max(1, d.confidence / 20))
       .attr("opacity", 0.6);
 
-    // Create nodes
+    // Create nodes with drag and hover interactions
     const node = svg.append("g")
       .selectAll("circle")
       .data(nodes)
@@ -78,7 +97,26 @@ export default function NetworkGraph({ drug, applications, isDark }: NetworkGrap
       .attr("r", (d: NetworkNode) => d.type === 'drug' ? 20 : 15)
       .attr("fill", (d: NetworkNode) => d.type === 'drug' ? "#3b82f6" : "#8b5cf6")
       .attr("stroke", isDark ? "#1e293b" : "#f1f5f9")
-      .attr("stroke-width", 2);
+      .attr("stroke-width", 2)
+      .style("cursor", "pointer")
+      .on("mouseover", () => trackNetworkInteraction('hover'))
+      .call(d3.drag<SVGCircleElement, NetworkNode>()
+        .on("start", (event, d) => {
+          handleNodeDrag();
+          if (!event.active) simulation.alphaTarget(0.3).restart();
+          d.fx = d.x;
+          d.fy = d.y;
+        })
+        .on("drag", (event, d) => {
+          d.fx = event.x;
+          d.fy = event.y;
+        })
+        .on("end", (event, d) => {
+          if (!event.active) simulation.alphaTarget(0);
+          d.fx = null;
+          d.fy = null;
+        })
+      );
 
     // Add labels
     const labels = svg.append("g")
@@ -124,10 +162,22 @@ export default function NetworkGraph({ drug, applications, isDark }: NetworkGrap
         .attr("y", (d: NetworkNode) => d.y || 0);
     });
 
+    // Add zoom behavior
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.5, 3])
+      .on("zoom", (event) => {
+        handleZoom();
+        svg.selectAll("g").attr("transform", event.transform);
+      });
+
+    svg.call(zoom);
+
     return () => {
-      simulation.stop();
+      if (simulationRef.current) {
+        simulationRef.current.stop();
+      }
     };
-  }, [drug, applications, isDark]);
+  }, [drug, applications, isDark, handleNodeDrag, handleZoom]);
 
   return (
     <div className="flex justify-center">

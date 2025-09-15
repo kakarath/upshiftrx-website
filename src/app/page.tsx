@@ -20,6 +20,10 @@ import {
   Download,
 } from "lucide-react";
 import NetworkGraph from '../components/NetworkGraph';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { ResultsSkeleton } from '../components/SkeletonLoader';
+import { DEMO_DRUGS, getRandomDrugs } from '../lib/demo-drugs';
+import { trackDemoUsage, trackExport, trackNewsletterSignup } from '../lib/analytics';
 
 interface DemoApplication {
   disease: string;
@@ -44,6 +48,8 @@ export default function Home() {
   const exportResults = () => {
     if (!demoResults) return;
     
+    trackExport('json');
+    
     const data = {
       drug: searchQuery,
       timestamp: new Date().toISOString(),
@@ -63,6 +69,7 @@ export default function Home() {
 
   const handleDemoSearch = async () => {
     setIsSearching(true);
+    trackDemoUsage(searchQuery);
 
     try {
       const response = await fetch('/api/demo', {
@@ -142,6 +149,7 @@ export default function Home() {
       });
 
       if (response.ok) {
+        trackNewsletterSignup();
         setIsSubmitted(true);
         setEmail("");
         setTimeout(() => setIsSubmitted(false), 5000);
@@ -467,7 +475,7 @@ export default function Home() {
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Try: Aspirin, Metformin, Ruxolitinib, or Ertugliflozin"
+                      placeholder={`Try: ${getRandomDrugs(4).map(d => d.name).join(', ')}`}
                       className={`w-full pl-12 pr-4 py-4 border rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                         isDark
                           ? "bg-white/20 border-white/30 text-white placeholder-slate-400"
@@ -481,7 +489,7 @@ export default function Home() {
                     className="w-full mt-4 bg-gradient-to-r from-purple-500 to-blue-600 text-white font-semibold py-4 px-8 rounded-xl hover:from-purple-600 hover:to-blue-700 transition-all duration-200 flex items-center justify-center space-x-2 group disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSearching ? (
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <LoadingSpinner size="sm" />
                     ) : (
                       <>
                         <Database className="w-5 h-5" />
@@ -493,7 +501,10 @@ export default function Home() {
                 </div>
 
                 {/* Demo Results */}
-                {demoResults && (
+                {isSearching && (
+                  <ResultsSkeleton />
+                )}
+                {demoResults && !isSearching && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
