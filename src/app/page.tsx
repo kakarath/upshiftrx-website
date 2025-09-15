@@ -17,7 +17,9 @@ import {
   Search,
   Network,
   Database,
+  Download,
 } from "lucide-react";
+import NetworkGraph from '../components/NetworkGraph';
 
 interface DemoApplication {
   disease: string;
@@ -38,6 +40,26 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [demoResults, setDemoResults] = useState<DemoResults | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+
+  const exportResults = () => {
+    if (!demoResults) return;
+    
+    const data = {
+      drug: searchQuery,
+      timestamp: new Date().toISOString(),
+      results: demoResults
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `upshiftrx-analysis-${searchQuery}-${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const handleDemoSearch = async () => {
     setIsSearching(true);
@@ -477,6 +499,18 @@ export default function Home() {
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-6"
                   >
+                    {/* Network Graph */}
+                    <div className="mb-8">
+                      <h3 className={`text-xl font-semibold mb-4 text-center ${
+                        isDark ? 'text-white' : 'text-slate-900'
+                      }`}>Drug-Disease Connection Network</h3>
+                      <NetworkGraph 
+                        drug={searchQuery}
+                        applications={demoResults.applications}
+                        isDark={isDark}
+                      />
+                    </div>
+
                     <div className="grid md:grid-cols-2 gap-6">
                       <div
                         className={`p-6 rounded-xl border ${
@@ -549,6 +583,19 @@ export default function Home() {
                             {demoResults.analysisTime || "0.3s"}
                           </p>
                         </div>
+                        
+                        {/* Export Button */}
+                        <button
+                          onClick={() => exportResults()}
+                          className={`mt-4 w-full px-4 py-2 rounded-lg border transition-colors flex items-center justify-center space-x-2 ${
+                            isDark 
+                              ? 'border-white/30 text-white hover:bg-white/10' 
+                              : 'border-slate-300 text-slate-900 hover:bg-slate-100'
+                          }`}
+                        >
+                          <Download className="w-4 h-4" />
+                          <span>Export Results</span>
+                        </button>
                       </div>
                     </div>
                   </motion.div>
