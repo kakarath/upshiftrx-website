@@ -43,6 +43,6 @@ MIT License (flexible for open innovation).
 
 Founded in Maryland, USA — 2025.
 We are committed to using AI to accelerate medical breakthroughs and help physicians discover better treatments for their patients.
-Website: https://upshiftrx.ai (coming soon)
+Website: https://www.upshiftrx.ai
 Contact: info@upshiftrx.ai (coming soon)
 # Trigger deployment Mon Sep 15 18:55:54 EDT 2025

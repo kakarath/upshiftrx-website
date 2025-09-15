@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "UpShiftRx - AI-Powered Drug Repurposing",
     description: "Accelerating healthcare innovation through AI-driven drug repurposing",
-    url: "https://upshiftrx.ai",
+    url: "https://www.upshiftrx.ai",
     siteName: "UpShiftRx",
     type: "website",
   },

@@ -1,7 +1,7 @@
 # UpShiftRx v2.0.0 - System Documentation
 
 ## 🚀 Live Production System
-- **Domain**: https://upshiftrx.ai
+- **Domain**: https://www.upshiftrx.ai
 - **Status**: ✅ LIVE and fully operational
 - **Version**: 2.0.0 (Major release with interactive features)
 
