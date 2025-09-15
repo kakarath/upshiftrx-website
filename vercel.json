@@ -1,0 +1,15 @@
+{
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "destination": "https://www.upshiftrx.ai/$1",
+      "permanent": true,
+      "has": [
+        {
+          "type": "host",
+          "value": "upshiftrx.ai"
+        }
+      ]
+    }
+  ]
+}
