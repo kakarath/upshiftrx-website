@@ -19,11 +19,15 @@ import {
   Database,
   Download,
 } from "lucide-react";
-import NetworkGraph from '../components/NetworkGraph';
-import LoadingSpinner from '../components/LoadingSpinner';
-import { ResultsSkeleton } from '../components/SkeletonLoader';
-import { DEMO_DRUGS, getRandomDrugs } from '../lib/demo-drugs';
-import { trackDemoUsage, trackExport, trackNewsletterSignup } from '../lib/analytics';
+import NetworkGraph from "../components/NetworkGraph";
+import LoadingSpinner from "../components/LoadingSpinner";
+import { ResultsSkeleton } from "../components/SkeletonLoader";
+import { DEMO_DRUGS, getRandomDrugs } from "../lib/demo-drugs";
+import {
+  trackDemoUsage,
+  trackExport,
+  trackNewsletterSignup,
+} from "../lib/analytics";
 
 interface DemoApplication {
   disease: string;
@@ -47,18 +51,20 @@ export default function Home() {
 
   const exportResults = () => {
     if (!demoResults) return;
-    
-    trackExport('json');
-    
+
+    trackExport("json");
+
     const data = {
       drug: searchQuery,
       timestamp: new Date().toISOString(),
-      results: demoResults
+      results: demoResults,
     };
-    
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `upshiftrx-analysis-${searchQuery}-${Date.now()}.json`;
     document.body.appendChild(a);
@@ -72,9 +78,9 @@ export default function Home() {
     trackDemoUsage(searchQuery);
 
     try {
-      const response = await fetch('/api/demo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/demo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ drug: searchQuery }),
       });
 
@@ -97,7 +103,10 @@ export default function Home() {
           ruxolitinib: {
             applications: [
               { disease: "Alopecia Areata", confidence: 89 },
-              { disease: "Chronic Active Epstein-Barr Virus Disease", confidence: 84 },
+              {
+                disease: "Chronic Active Epstein-Barr Virus Disease",
+                confidence: 84,
+              },
               { disease: "Rheumatoid Arthritis", confidence: 78 },
               { disease: "Severe COVID-19 Pneumonia", confidence: 72 },
               { disease: "Vitiligo Treatment", confidence: 74 },
@@ -120,7 +129,7 @@ export default function Home() {
         setDemoResults(mockResults[query] || mockResults.default);
       }
     } catch {
-      console.error('Demo API temporarily unavailable');
+      console.error("Demo API temporarily unavailable");
       // Fallback to mock data instead of alert
       const mockResults: Record<string, DemoResults> = {
         default: {
@@ -154,12 +163,12 @@ export default function Home() {
         setEmail("");
         setTimeout(() => setIsSubmitted(false), 5000);
       } else {
-        console.error('Newsletter subscription failed');
+        console.error("Newsletter subscription failed");
         // Show user-friendly error without alert()
         setIsSubmitted(false);
       }
     } catch {
-      console.error('Network error during subscription');
+      console.error("Network error during subscription");
       // Show user-friendly error without alert()
       setIsSubmitted(false);
     }
@@ -173,6 +182,13 @@ export default function Home() {
           : "bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100"
       }`}
     >
+      <a
+        href="#main-content"
+        id="main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-600 text-white px-4 py-2 rounded z-50"
+      >
+        Skip to main content
+      </a>
       {/* Background Pattern */}
       <div
         className="absolute inset-0 opacity-20"
@@ -237,6 +253,7 @@ export default function Home() {
             </nav>
             <button
               onClick={() => setIsDark(!isDark)}
+              aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
               className={`p-2 rounded-lg transition-colors ${
                 isDark
                   ? "bg-white/10 hover:bg-white/20 text-white"
@@ -314,9 +331,9 @@ export default function Home() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`px-6 py-3 rounded-lg border font-semibold transition-all duration-200 flex items-center space-x-2 group ${
-                    isDark 
-                      ? 'border-white/30 text-white hover:bg-white/10' 
-                      : 'border-slate-300 text-slate-900 hover:bg-slate-100'
+                    isDark
+                      ? "border-white/30 text-white hover:bg-white/10"
+                      : "border-slate-300 text-slate-900 hover:bg-slate-100"
                   }`}
                 >
                   <FileText className="w-5 h-5" />
@@ -424,10 +441,11 @@ export default function Home() {
                   </p>
                   <p className={isDark ? "text-slate-300" : "text-slate-600"}>
                     Founded by a team combining medical expertise with
-                    cutting-edge AI research, we&apos;re accelerating the discovery
-                    of new treatments by repurposing existing, FDA-approved
-                    medications. This approach can reduce development time from
-                    decades to years, bringing hope to patients faster.
+                    cutting-edge AI research, we&apos;re accelerating the
+                    discovery of new treatments by repurposing existing,
+                    FDA-approved medications. This approach can reduce
+                    development time from decades to years, bringing hope to
+                    patients faster.
                   </p>
                 </div>
               </div>
@@ -475,17 +493,32 @@ export default function Home() {
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder={`Try: ${getRandomDrugs(4).map(d => d.name).join(', ')}`}
+                      placeholder={`Try: ${getRandomDrugs(4)
+                        .map((d) => d.name)
+                        .join(", ")}`}
+                      aria-label="Search for drug names to analyze repurposing potential"
+                      aria-describedby="search-help"
                       className={`w-full pl-12 pr-4 py-4 border rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                         isDark
                           ? "bg-white/20 border-white/30 text-white placeholder-slate-400"
                           : "bg-white/80 border-slate-300 text-slate-900 placeholder-slate-500"
                       }`}
+                      onKeyDown={(e) => {
+                        if (
+                          e.key === "Enter" &&
+                          searchQuery.trim() &&
+                          !isSearching
+                        ) {
+                          handleDemoSearch();
+                        }
+                      }}
                     />
                   </div>
                   <button
                     onClick={() => handleDemoSearch()}
                     disabled={!searchQuery.trim() || isSearching}
+                    aria-label="Analyze drug repurposing potential"
+                    aria-busy={isSearching}
                     className="w-full mt-4 bg-gradient-to-r from-purple-500 to-blue-600 text-white font-semibold py-4 px-8 rounded-xl hover:from-purple-600 hover:to-blue-700 transition-all duration-200 flex items-center justify-center space-x-2 group disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSearching ? (
@@ -501,21 +534,25 @@ export default function Home() {
                 </div>
 
                 {/* Demo Results */}
-                {isSearching && (
-                  <ResultsSkeleton />
-                )}
+                {isSearching && <ResultsSkeleton />}
                 {demoResults && !isSearching && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-6"
+                    aria-live="polite"
+                    aria-label="Analysis results"
                   >
                     {/* Network Graph */}
                     <div className="mb-8">
-                      <h3 className={`text-xl font-semibold mb-4 text-center ${
-                        isDark ? 'text-white' : 'text-slate-900'
-                      }`}>Drug-Disease Connection Network</h3>
-                      <NetworkGraph 
+                      <h3
+                        className={`text-xl font-semibold mb-4 text-center ${
+                          isDark ? "text-white" : "text-slate-900"
+                        }`}
+                      >
+                        Drug-Disease Connection Network
+                      </h3>
+                      <NetworkGraph
                         drug={searchQuery}
                         applications={demoResults.applications}
                         isDark={isDark}
@@ -594,14 +631,15 @@ export default function Home() {
                             {demoResults.analysisTime || "0.3s"}
                           </p>
                         </div>
-                        
+
                         {/* Export Button */}
                         <button
                           onClick={() => exportResults()}
+                          aria-label="Export analysis results as JSON file"
                           className={`mt-4 w-full px-4 py-2 rounded-lg border transition-colors flex items-center justify-center space-x-2 ${
-                            isDark 
-                              ? 'border-white/30 text-white hover:bg-white/10' 
-                              : 'border-slate-300 text-slate-900 hover:bg-slate-100'
+                            isDark
+                              ? "border-white/30 text-white hover:bg-white/10"
+                              : "border-slate-300 text-slate-900 hover:bg-slate-100"
                           }`}
                         >
                           <Download className="w-4 h-4" />
@@ -733,8 +771,8 @@ export default function Home() {
                       <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </button>
                     <p className="text-xs text-slate-400 mt-2">
-                      By joining, you agree to our privacy policy. We&apos;ll only
-                      email you about platform updates.
+                      By joining, you agree to our privacy policy. We&apos;ll
+                      only email you about platform updates.
                     </p>
                   </form>
                 ) : (
