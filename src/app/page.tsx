@@ -22,12 +22,13 @@ import {
 import NetworkGraph from "../components/NetworkGraph";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { ResultsSkeleton } from "../components/SkeletonLoader";
-import { DEMO_DRUGS, getRandomDrugs } from "../lib/demo-drugs";
+import { getRandomDrugs } from "../lib/demo-drugs";
 import {
   trackDemoUsage,
-  trackExport,
   trackNewsletterSignup,
 } from "../lib/analytics";
+
+import { exportToJSON, exportToCSV, exportToPDF } from "../lib/export-utils";
 
 interface DemoApplication {
   disease: string;
@@ -48,30 +49,6 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [demoResults, setDemoResults] = useState<DemoResults | null>(null);
   const [isSearching, setIsSearching] = useState(false);
-
-  const exportResults = () => {
-    if (!demoResults) return;
-
-    trackExport("json");
-
-    const data = {
-      drug: searchQuery,
-      timestamp: new Date().toISOString(),
-      results: demoResults,
-    };
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `upshiftrx-analysis-${searchQuery}-${Date.now()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
 
   const handleDemoSearch = async () => {
     setIsSearching(true);
@@ -537,6 +514,7 @@ export default function Home() {
                 {isSearching && <ResultsSkeleton />}
                 {demoResults && !isSearching && (
                   <motion.div
+                    id="results-container"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-6"
@@ -632,19 +610,70 @@ export default function Home() {
                           </p>
                         </div>
 
-                        {/* Export Button */}
-                        <button
-                          onClick={() => exportResults()}
-                          aria-label="Export analysis results as JSON file"
-                          className={`mt-4 w-full px-4 py-2 rounded-lg border transition-colors flex items-center justify-center space-x-2 ${
-                            isDark
-                              ? "border-white/30 text-white hover:bg-white/10"
-                              : "border-slate-300 text-slate-900 hover:bg-slate-100"
-                          }`}
-                        >
-                          <Download className="w-4 h-4" />
-                          <span>Export Results</span>
-                        </button>
+                        {/* Export Buttons */}
+                        <div className="mt-4 space-y-2">
+                          <div className="grid grid-cols-3 gap-2">
+                            <button
+                              onClick={() =>
+                                exportToJSON({
+                                  drug: searchQuery,
+                                  timestamp: new Date().toISOString(),
+                                  results: demoResults,
+                                })
+                              }
+                              aria-label="Export analysis results as JSON file"
+                              className={`px-3 py-2 rounded-lg border transition-colors flex items-center justify-center space-x-1 text-sm ${
+                                isDark
+                                  ? "border-white/30 text-white hover:bg-white/10"
+                                  : "border-slate-300 text-slate-900 hover:bg-slate-100"
+                              }`}
+                            >
+                              <FileText className="w-3 h-3" />
+                              <span>JSON</span>
+                            </button>
+
+                            <button
+                              onClick={() =>
+                                exportToCSV({
+                                  drug: searchQuery,
+                                  timestamp: new Date().toISOString(),
+                                  results: demoResults,
+                                })
+                              }
+                              aria-label="Export analysis results as CSV file"
+                              className={`px-3 py-2 rounded-lg border transition-colors flex items-center justify-center space-x-1 text-sm ${
+                                isDark
+                                  ? "border-white/30 text-white hover:bg-white/10"
+                                  : "border-slate-300 text-slate-900 hover:bg-slate-100"
+                              }`}
+                            >
+                              <Database className="w-3 h-3" />
+                              <span>CSV</span>
+                            </button>
+
+                            <button
+                              onClick={() =>
+                                exportToPDF({
+                                  drug: searchQuery,
+                                  timestamp: new Date().toISOString(),
+                                  results: demoResults,
+                                })
+                              }
+                              aria-label="Export analysis results as text file"
+                              className={`px-3 py-2 rounded-lg border transition-colors flex items-center justify-center space-x-1 text-sm ${
+                                isDark
+                                  ? "border-white/30 text-white hover:bg-white/10"
+                                  : "border-slate-300 text-slate-900 hover:bg-slate-100"
+                              }`}
+                            >
+                              <Download className="w-3 h-3" />
+                              <span>TXT</span>
+                            </button>
+                          </div>
+                          <p className="text-xs text-center text-slate-500">
+                            Choose your export format
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </motion.div>
