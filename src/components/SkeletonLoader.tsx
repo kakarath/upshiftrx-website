@@ -21,12 +21,14 @@ export function NetworkGraphSkeleton() {
   );
 }
 
+const skeletonItems = [1, 2, 3];
+
 export function ResultsSkeleton() {
   return (
     <div className="space-y-4">
       <SkeletonLoader className="h-8 w-3/4" />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[1, 2, 3].map(i => (
+        {skeletonItems.map(i => (
           <div key={i} className="p-4 border rounded-lg">
             <SkeletonLoader className="h-6 w-1/2 mb-2" />
             <SkeletonLoader className="h-4 w-full mb-1" />

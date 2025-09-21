@@ -1,12 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDrugByName } from '../../../lib/demo-drugs';
+import { getDrugByName, getDrugsForDisease } from '../../../lib/demo-drugs';
+
+// Input sanitization helper
+const sanitizeInput = (input: string): string => {
+  return input.replace(/[<>"'&]/g, '').trim().slice(0, 100);
+};
 
 export async function POST(request: NextRequest) {
   try {
-    const { drug } = await request.json();
+    const body = await request.json();
+    const { drug, disease, searchMode } = body;
 
-    if (!drug) {
-      return NextResponse.json({ error: 'Drug name is required' }, { status: 400 });
+    if (!drug && !disease) {
+      return NextResponse.json({ error: 'Drug or disease name is required' }, { status: 400 });
+    }
+
+    // Sanitize inputs
+    const sanitizedDrug = drug ? sanitizeInput(drug) : null;
+    const sanitizedDisease = disease ? sanitizeInput(disease) : null;
+
+     // Handle disease-to-drug search
+    if (searchMode === 'disease' || sanitizedDisease) {
+      const results = getDrugsForDisease(sanitizedDisease || sanitizedDrug!);
+      if (results) {
+        return NextResponse.json({
+          ...results,
+          applications: results.applications?.map(app => ({
+            ...app,
+            disease: sanitizeInput(app.disease || ''),
+            drug: sanitizeInput(app.drug || '')
+          }))
+        });
+      }
+    }
+
+    // Handle drug-to-disease search (existing logic)
+    const demoDrug = getDrugByName(sanitizedDrug!);
+    if (demoDrug) {
+      return NextResponse.json({
+        applications: demoDrug.applications.map(app => ({
+          disease: sanitizeInput(app.disease),
+          confidence: app.confidence
+        })),
+        papersAnalyzed: Math.floor(Math.random() * 10000) + 5000,
+        connections: Math.floor(Math.random() * 500) + 200,
+        analysisTime: `${(Math.random() * 2 + 0.3).toFixed(1)}s`
+      });
     }
 
     // Validate API URL to prevent SSRF
@@ -20,6 +59,11 @@ export async function POST(request: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
       signal: AbortSignal.timeout(5000) // 5 second timeout
     });
+    
+    if (!diseasesResponse.ok) {
+      throw new Error('Failed to fetch diseases');
+    }
+    
     const diseasesData = await diseasesResponse.json();
     const diseases = diseasesData.diseases || ['cancer', 'diabetes', 'heart disease'];
 
@@ -30,14 +74,14 @@ export async function POST(request: NextRequest) {
           const response = await fetch(`${apiUrl}/analyze`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ drug: drug.toLowerCase(), disease }),
+            body: JSON.stringify({ drug: sanitizedDrug?.toLowerCase(), disease: sanitizeInput(disease) }),
             signal: AbortSignal.timeout(10000) // 10 second timeout
           });
           
           if (response.ok) {
             const data = await response.json();
             return {
-              disease: disease.charAt(0).toUpperCase() + disease.slice(1),
+              disease: sanitizeInput(disease.charAt(0).toUpperCase() + disease.slice(1)),
               confidence: Math.min(95, Math.max(60, data.paper_count * 15 + Math.random() * 20)),
               papers: data.papers || []
             };
@@ -53,11 +97,11 @@ export async function POST(request: NextRequest) {
     
     if (validAnalyses.length === 0) {
       // Fallback to demo drug database
-      const demoDrug = getDrugByName(drug);
+      const demoDrug = getDrugByName(sanitizedDrug!);
       if (demoDrug) {
         return NextResponse.json({
           applications: demoDrug.applications.map(app => ({
-            disease: app.disease,
+            disease: sanitizeInput(app.disease),
             confidence: app.confidence
           })),
           papersAnalyzed: Math.floor(Math.random() * 10000) + 5000,
@@ -72,7 +116,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({
       applications: validAnalyses.map(analysis => ({
-        disease: analysis.disease,
+        disease: sanitizeInput(analysis.disease),
         confidence: Math.round(analysis.confidence)
       })),
       papersAnalyzed: totalPapers * 1000 + Math.floor(Math.random() * 5000),

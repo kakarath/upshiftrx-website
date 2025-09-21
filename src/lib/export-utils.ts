@@ -17,21 +17,29 @@ export const exportToJSON = (data: ExportData) => {
   downloadFile(blob, `upshiftrx-analysis-${data.drug}-${Date.now()}.json`);
 };
 
+// CSV field escaping helper
+const escapeCSVField = (field: string): string => {
+  if (field.includes(',') || field.includes('"') || field.includes('\n')) {
+    return `"${field.replace(/"/g, '""')}"`;
+  }
+  return field;
+};
+
 export const exportToCSV = (data: ExportData) => {
   trackExport('csv');
   const csvData = [
     ['Drug', 'Disease', 'Confidence (%)', 'Papers Analyzed', 'Connections', 'Analysis Time'],
     ...data.results.applications.map(app => [
-      data.drug,
-      app.disease,
+      escapeCSVField(data.drug),
+      escapeCSVField(app.disease),
       app.confidence.toString(),
       data.results.papersAnalyzed.toString(),
       data.results.connections.toString(),
-      data.results.analysisTime
+      escapeCSVField(data.results.analysisTime)
     ])
   ];
   
-  const csv = csvData.map(row => row.map(field => `"${field}"`).join(',')).join('\n');
+  const csv = csvData.map(row => row.join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   downloadFile(blob, `upshiftrx-analysis-${data.drug}-${Date.now()}.csv`);
 };
@@ -62,10 +70,14 @@ Research Evidence:
 const downloadFile = (blob: Blob, filename: string) => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  
+  try {
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 };

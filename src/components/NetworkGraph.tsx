@@ -177,11 +177,45 @@ export default function NetworkGraph({ drug, applications, isDark }: NetworkGrap
         simulationRef.current.stop();
       }
     };
-  }, [drug, applications, isDark, handleNodeDrag, handleZoom]);
+// Auto-fit to window on load
+  const bounds = svg.node()?.getBBox();
+  if (bounds) {
+    const fullWidth = bounds.width;
+    const fullHeight = bounds.height;
+    const midX = bounds.x + fullWidth / 2;
+    const midY = bounds.y + fullHeight / 2;
+    
+    const scale = 0.8 / Math.max(fullWidth / width, fullHeight / height);
+    const translate = [width / 2 - scale * midX, height / 2 - scale * midY];
+    
+    svg.call(zoom.transform, d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale));
+  }
+}, [applications, drug, isDark, handleNodeDrag, handleZoom]);
 
-  return (
-    <div className="flex justify-center">
-      <svg ref={svgRef} className="border rounded-lg" style={{ background: isDark ? '#0f172a' : '#f8fafc' }} />
+
+  // Add zoom instructions
+return (
+  <div className="relative" role="img" aria-label={`Network visualization showing connections between ${drug} and ${applications.length} diseases`}>
+    <svg 
+      ref={svgRef} 
+      width={600} 
+      height={400}
+      aria-hidden="true"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          trackNetworkInteraction('keyboard');
+        }
+      }}
+    />
+    <div className={`absolute top-2 right-2 text-xs p-2 rounded ${
+      isDark ? 'bg-black/50 text-white' : 'bg-white/80 text-slate-600'
+    }`}>
+      💡 Scroll to zoom • Drag to pan • Tab to focus
     </div>
+    <div className="sr-only">
+      Network graph showing {drug} connected to {applications.length} diseases: {applications.map(app => `${app.disease} (${app.confidence}% confidence)`).join(', ')}
+    </div>
+  </div>
   );
 }
