@@ -9,6 +9,58 @@ export interface DemoDrug {
   }>;
 }
 
+export interface DemoDisease {
+  name: string;
+  description: string;
+  category: string;
+  treatments: Array<{
+    drug: string;
+    confidence: number;
+    description: string;
+  }>;
+}
+
+// Disease data for bidirectional search
+export const DEMO_DISEASES: DemoDisease[] = [
+  {
+    name: "Rheumatoid Arthritis",
+    description: "Chronic inflammatory disorder affecting joints",
+    category: "Autoimmune",
+    treatments: [
+      { drug: "Hydroxychloroquine", confidence: 84, description: "Disease-modifying antirheumatic drug" },
+      { drug: "Rituximab", confidence: 85, description: "Depletes pathogenic B-cells" },
+      { drug: "Baricitinib", confidence: 88, description: "JAK inhibitor for moderate to severe RA" }
+    ]
+  },
+  {
+    name: "Type 2 Diabetes",
+    description: "Metabolic disorder characterized by high blood sugar",
+    category: "Metabolic",
+    treatments: [
+      { drug: "Metformin", confidence: 95, description: "First-line diabetes treatment" },
+      { drug: "Ertugliflozin", confidence: 91, description: "Glucose-lowering medication" }
+    ]
+  },
+  {
+    name: "Multiple Myeloma",
+    description: "Cancer of plasma cells in bone marrow",
+    category: "Oncology",
+    treatments: [
+      { drug: "Thalidomide", confidence: 86, description: "Anti-cancer and anti-angiogenic effects" },
+      { drug: "Dexamethasone", confidence: 87, description: "Part of combination chemotherapy" }
+    ]
+  },
+  {
+    name: "Hypertension",
+    description: "High blood pressure condition",
+    category: "Cardiovascular",
+    treatments: [
+      { drug: "Propranolol", confidence: 93, description: "Reduces blood pressure and heart rate" },
+      { drug: "Minoxidil", confidence: 89, description: "Severe hypertension treatment" }
+    ]
+  }
+];
+
 export const DEMO_DRUGS: DemoDrug[] = [
   {
     name: "Aspirin",
@@ -161,4 +213,20 @@ export const getRandomDrugs = (count: number = 4): DemoDrug[] => {
 
 export const getDrugByName = (name: string): DemoDrug | undefined => {
   return DEMO_DRUGS.find(drug => drug.name.toLowerCase() === name.toLowerCase());
+};
+
+export const getDrugsForDisease = (diseaseName: string) => {
+  const disease = DEMO_DISEASES.find(d => d.name.toLowerCase() === diseaseName.toLowerCase());
+  if (disease) {
+    return {
+      applications: disease.treatments.map(treatment => ({
+        disease: treatment.drug,
+        confidence: treatment.confidence
+      })),
+      papersAnalyzed: Math.floor(Math.random() * 8000) + 3000,
+      connections: Math.floor(Math.random() * 400) + 150,
+      analysisTime: `${(Math.random() * 1.5 + 0.4).toFixed(1)}s`
+    };
+  }
+  return null;
 };

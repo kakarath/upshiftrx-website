@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -18,9 +18,9 @@ import {
   Network,
   Database,
   Download,
+  Hospital,
 } from "lucide-react";
 import NetworkGraph from "../components/NetworkGraph";
-import LoadingSpinner from "../components/LoadingSpinner";
 import { ResultsSkeleton } from "../components/SkeletonLoader";
 import { getRandomDrugs } from "../lib/demo-drugs";
 import {
@@ -43,27 +43,40 @@ interface DemoResults {
 }
 
 export default function Home() {
+  const [searchMode, setSearchMode] = useState<'drug' | 'disease'>('drug');
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isDark, setIsDark] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [demoResults, setDemoResults] = useState<DemoResults | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchStatus, setSearchStatus] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  // Fix hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleDemoSearch = async () => {
     setIsSearching(true);
+    setSearchStatus(`Searching for ${searchMode === 'drug' ? 'drug' : 'disease'}: ${searchQuery}`);
     trackDemoUsage(searchQuery);
 
     try {
       const response = await fetch("/api/demo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ drug: searchQuery }),
+        body: JSON.stringify({ 
+          [searchMode]: searchQuery,
+          searchMode 
+        }),
       });
 
       if (response.ok) {
         const data = await response.json();
         setDemoResults(data);
+        setSearchStatus(`Found ${data.applications?.length || 0} potential applications for ${searchQuery}`);
       } else {
         // Fallback to mock data if API fails
         const mockResults: Record<string, DemoResults> = {
@@ -104,6 +117,7 @@ export default function Home() {
         };
         const query = searchQuery.toLowerCase();
         setDemoResults(mockResults[query] || mockResults.default);
+        setSearchStatus(`Found ${(mockResults[query] || mockResults.default).applications?.length || 0} potential applications for ${searchQuery}`);
       }
     } catch {
       console.error("Demo API temporarily unavailable");
@@ -119,9 +133,15 @@ export default function Home() {
         },
       };
       setDemoResults(mockResults.default);
+      setSearchStatus('Service temporarily unavailable');
     }
 
     setIsSearching(false);
+    
+    // Focus results for screen readers
+    setTimeout(() => {
+      document.getElementById('results-container')?.focus();
+    }, 100);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -464,50 +484,89 @@ export default function Home() {
 
                 {/* Search Interface */}
                 <div className="max-w-2xl mx-auto mb-8">
+                  {/* Search Mode Toggle */}
+                  <div className="flex justify-center mb-6">
+                    <div className={`flex rounded-lg p-1 ${isDark ? 'bg-white/10' : 'bg-slate-200'}`}>
+                      <button
+                        onClick={() => {
+                          setSearchMode('drug');
+                          // Clear everything when switching modes
+                          setSearchQuery('');
+                          setDemoResults(null);
+                          setSearchStatus('');
+                          setIsSearching(false);
+                        }}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                          searchMode === 'drug'
+                            ? 'bg-blue-500 text-white'
+                            : isDark ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <Search className="w-4 h-4" />
+                        <span>Search by Drug</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSearchMode('disease');
+                          // Clear everything when switching modes
+                          setSearchQuery('');
+                          setDemoResults(null);
+                          setSearchStatus('');
+                          setIsSearching(false);
+                        }}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                          searchMode === 'disease'
+                            ? 'bg-blue-500 text-white'
+                            : isDark ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <Hospital className="w-4 h-4" />
+                        <span>Search by Disease</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Search Input */}
                   <div className="relative">
+                    <div id="search-instructions" className="sr-only">
+                      Enter a {searchMode} name and press Enter or click Search to analyze potential applications
+                    </div>
                     <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder={`Try: ${getRandomDrugs(4)
-                        .map((d) => d.name)
-                        .join(", ")}`}
-                      aria-label="Search for drug names to analyze repurposing potential"
-                      aria-describedby="search-help"
+                      onKeyDown={(e) => e.key === 'Enter' && searchQuery.trim() && handleDemoSearch()}
+                      placeholder={mounted ? (searchMode === 'drug' 
+                        ? `Try: ${getRandomDrugs(4).map((d) => d.name).join(", ")}`
+                        : `Try: Rheumatoid Arthritis, Type 2 Diabetes, Hypertension`
+                      ) : 'Loading...'}
+                      aria-label={`Search for ${searchMode} names to analyze repurposing potential`}
+                      aria-describedby="search-instructions"
                       className={`w-full pl-12 pr-4 py-4 border rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                         isDark
                           ? "bg-white/20 border-white/30 text-white placeholder-slate-400"
                           : "bg-white/80 border-slate-300 text-slate-900 placeholder-slate-500"
                       }`}
-                      onKeyDown={(e) => {
-                        if (
-                          e.key === "Enter" &&
-                          searchQuery.trim() &&
-                          !isSearching
-                        ) {
-                          handleDemoSearch();
-                        }
-                      }}
                     />
+                    <button
+                      onClick={handleDemoSearch}
+                      disabled={!searchQuery.trim() || isSearching}
+                      aria-label={`Search for ${searchMode}: ${searchQuery}`}
+                      className={`absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-2 rounded-lg transition-colors ${
+                        !searchQuery.trim() || isSearching
+                          ? 'bg-gray-400 cursor-not-allowed'
+                          : 'bg-blue-500 hover:bg-blue-600 text-white'
+                      }`}
+                    >
+                      {isSearching ? 'Searching...' : 'Search'}
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleDemoSearch()}
-                    disabled={!searchQuery.trim() || isSearching}
-                    aria-label="Analyze drug repurposing potential"
-                    aria-busy={isSearching}
-                    className="w-full mt-4 bg-gradient-to-r from-purple-500 to-blue-600 text-white font-semibold py-4 px-8 rounded-xl hover:from-purple-600 hover:to-blue-700 transition-all duration-200 flex items-center justify-center space-x-2 group disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSearching ? (
-                      <LoadingSpinner size="sm" />
-                    ) : (
-                      <>
-                        <Database className="w-5 h-5" />
-                        <span>Analyze Drug Repurposing Potential</span>
-                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                      </>
-                    )}
-                  </button>
+                </div>
+
+                {/* Screen reader announcements */}
+                <div aria-live="polite" aria-atomic="true" className="sr-only">
+                  {searchStatus}
                 </div>
 
                 {/* Demo Results */}
@@ -518,8 +577,9 @@ export default function Home() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-6"
-                    aria-live="polite"
-                    aria-label="Analysis results"
+                    tabIndex={-1}
+                    role="region"
+                    aria-label={`Analysis results for ${searchQuery}: ${demoResults.applications?.length || 0} potential applications found`}
                   >
                     {/* Network Graph */}
                     <div className="mb-8">
