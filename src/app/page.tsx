@@ -240,6 +240,14 @@ export default function Home() {
                 Demo
               </a>
               <a
+                href="/status"
+                className={`hover:text-blue-400 transition-colors ${
+                  isDark ? "text-slate-300" : "text-slate-600"
+                }`}
+              >
+                Status
+              </a>
+              <a
                 href="#contact"
                 className={`hover:text-blue-400 transition-colors ${
                   isDark ? "text-slate-300" : "text-slate-600"
