@@ -19,6 +19,7 @@ export const metadata: Metadata = {
   description: "Discovering new uses for existing drugs through advanced AI and literature mining. Accelerating healthcare innovation for better patient outcomes.",
   keywords: "drug repurposing, AI, healthcare, medical research, pharmaceutical, biotech",
   authors: [{ name: "UpShiftRx LLC" }],
+  manifest: "/manifest.json",
   openGraph: {
     title: "UpShiftRx - AI-Powered Drug Repurposing",
     description: "Accelerating healthcare innovation through AI-driven drug repurposing",
@@ -31,6 +32,18 @@ export const metadata: Metadata = {
     title: "UpShiftRx - AI-Powered Drug Repurposing",
     description: "Accelerating healthcare innovation through AI-driven drug repurposing",
   },
+  other: {
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "default",
+    "apple-mobile-web-app-title": "UpShiftRx",
+  },
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#3b82f6',
 };
 
 export default function RootLayout({
@@ -54,7 +67,10 @@ export default function RootLayout({
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
-                gtag('config', '${GA_TRACKING_ID}');
+                gtag('config', '${GA_TRACKING_ID}', {
+                  page_title: document.title,
+                  page_location: window.location.href
+                });
               `}
             </Script>
           </>
