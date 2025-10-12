@@ -58,6 +58,17 @@ export const DEMO_DISEASES: DemoDisease[] = [
       { drug: "Propranolol", confidence: 93, description: "Reduces blood pressure and heart rate" },
       { drug: "Minoxidil", confidence: 89, description: "Severe hypertension treatment" }
     ]
+  },
+  {
+    name: "Pulmonary Hypertension",
+    description: "High blood pressure in the lungs' arteries",
+    category: "Cardiovascular",
+    treatments: [
+      { drug: "Sildenafil", confidence: 88, description: "Reduces pulmonary arterial pressure" },
+      { drug: "Bosentan", confidence: 85, description: "Endothelin receptor antagonist" },
+      { drug: "Epoprostenol", confidence: 91, description: "Prostacyclin analog for severe PAH" },
+      { drug: "Tadalafil", confidence: 83, description: "PDE5 inhibitor for pulmonary vasodilation" }
+    ]
   }
 ];
 
