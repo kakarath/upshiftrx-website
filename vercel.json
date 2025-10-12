@@ -4,6 +4,13 @@
       "maxDuration": 10
     }
   },
+  "redirects": [
+    {
+      "source": "https://upshiftrx.ai/:path*",
+      "destination": "https://www.upshiftrx.ai/:path*",
+      "permanent": true
+    }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",
