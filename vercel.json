@@ -1,13 +1,16 @@
 {
-  "redirects": [
+  "functions": {
+    "src/app/api/*/route.ts": {
+      "maxDuration": 10
+    }
+  },
+  "headers": [
     {
-      "source": "/(.*)",
-      "destination": "https://www.upshiftrx.ai/$1",
-      "permanent": true,
-      "has": [
+      "source": "/api/(.*)",
+      "headers": [
         {
-          "type": "host",
-          "value": "upshiftrx.ai"
+          "key": "Cache-Control",
+          "value": "public, max-age=60, stale-while-revalidate=300"
         }
       ]
     }
