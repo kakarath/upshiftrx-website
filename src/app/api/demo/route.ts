@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDrugByName, getDrugsForDisease } from '../../../lib/demo-drugs';
+import { apiCircuitBreaker } from '../../../lib/circuit-breaker';
 
 // Input sanitization helper
 const sanitizeInput = (input: string): string => {
@@ -7,7 +8,15 @@ const sanitizeInput = (input: string): string => {
 };
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  
   try {
+    // Early timeout check
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Request timeout')), 8000)
+    );
+    
+    const processRequest = async () => {
     const body = await request.json();
     const { drug, disease, searchMode } = body;
 
@@ -68,8 +77,23 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ error: 'No analysis results found' }, { status: 404 });
+    };
+    
+    // Execute with circuit breaker and timeout
+    const result = await Promise.race([
+      apiCircuitBreaker.execute(processRequest),
+      timeoutPromise
+    ]);
+    
+    return result;
   } catch (error) {
-    console.error('Demo API Error:', error);
+    const duration = Date.now() - startTime;
+    console.error(`Demo API Error (${duration}ms):`, error);
+    
+    if (error instanceof Error && error.message === 'Request timeout') {
+      return NextResponse.json({ error: 'Request timeout' }, { status: 408 });
+    }
+    
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -1,32 +1,34 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { rateLimiter, strictRateLimiter } from './lib/rate-limiter';
 
 export function middleware(request: NextRequest) {
-  const response = NextResponse.next();
-
-  // Security headers
-  response.headers.set('X-DNS-Prefetch-Control', 'on');
-  response.headers.set('X-XSS-Protection', '1; mode=block');
-  response.headers.set('X-Frame-Options', 'DENY');
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('Referrer-Policy', 'origin-when-cross-origin');
-  response.headers.set(
-    'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://www.google-analytics.com https://connect.mailerlite.com;"
-  );
-
-  // Rate limiting for API routes
   if (request.nextUrl.pathname.startsWith('/api/')) {
-    // Simple rate limiting (in production, use Redis or similar)
-    response.headers.set('X-RateLimit-Limit', '100');
-    response.headers.set('X-RateLimit-Remaining', '99');
+    const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+    
+    // Apply strict rate limiting to heavy operations
+    const isHeavyOp = request.nextUrl.pathname.includes('/jobs');
+    const limiter = isHeavyOp ? strictRateLimiter : rateLimiter;
+    
+    if (!limiter.isAllowed(ip)) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded' },
+        { status: 429, headers: { 'Retry-After': '60' } }
+      );
+    }
+    
+    const response = NextResponse.next();
+    
+    // Add rate limit headers
+    response.headers.set('X-RateLimit-Remaining', limiter.getRemainingRequests(ip).toString());
+    response.headers.set('X-Request-Timeout', '8000');
+    response.headers.set('X-Request-ID', crypto.randomUUID());
+    
+    return response;
   }
-
-  return response;
+  
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: '/api/:path*'
 };
